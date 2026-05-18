@@ -74,26 +74,26 @@ A modern peer-to-peer learning platform where students can connect, collaborate,
 
 ## 🏠 Home Page
 
-<img width="100%" alt="Home Page" src="./screenshots/home.png">
+<img width="100%" alt="Home Page" src="./src/screenshots/home.png">
 
 ---
 
 ## 🔐 Authentication
 
-<img width="100%" alt="Login Page" src="./screenshots/login.png">
+<img width="100%" alt="Login Page" src="./src/screenshots/login.png">
 
 ---
 
 ## 👨‍🏫 Become a Mentor
 
-<img width="100%" alt="Become a Mentor" src="./screenshots/become-mentor.png">
+<img width="100%" alt="Become a Mentor" src="./src/screenshots/become-mentor.png">
 
 ---
 
 
 ## 🤖 AI Assistant
 
-<img width="100%" alt="AI Assistant" src="./screenshots/ai-chat.png">
+<img width="100%" alt="AI Assistant" src="./src/screenshots/ai-chat.png">
 
 ---
 
