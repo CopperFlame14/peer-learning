@@ -78,6 +78,11 @@ const Navbar = () => {
           icon: Compass,
         },
         {
+          to: "/resources",
+          label: "Resources",
+          icon: BookOpen,
+        },
+        {
           to: "/sessions",
           label: "Sessions",
           icon: Calendar,
