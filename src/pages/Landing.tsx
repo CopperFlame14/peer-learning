@@ -12,6 +12,8 @@ import {
   Bot,
   Flame,
   Moon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import heroIllustration from "@/assets/hero-illustration.png";
 
 const features = [
@@ -89,8 +91,11 @@ export default function Landing() {
 
   const [open, setOpen] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showBackToTop, setShowBackToTop] = useState(false); 
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [streak, setStreak] = useState<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const testimonialAutoScrollRef = useRef<number | null>(null);
+  const testimonialPausedRef = useRef(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1800);
@@ -99,21 +104,59 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
+    const el = scrollRef.current;
+    if (!el || loading) {
+      return;
+    }
+
+    // clear any existing interval before creating a new one
+    if (testimonialAutoScrollRef.current) {
+      clearInterval(testimonialAutoScrollRef.current);
+      testimonialAutoScrollRef.current = null;
+    }
+
+    testimonialAutoScrollRef.current = window.setInterval(() => {
+      if (testimonialPausedRef.current) {
+        return;
+      }
+
+      // Cards are duplicated, so loop back at halfway for a seamless carousel.
+      const loopPoint = el.scrollWidth / 2;
+      if (loopPoint <= 0) {
+        return;
+      }
+
+      el.scrollLeft += 3; // slightly faster
+      if (el.scrollLeft >= loopPoint) {
+        el.scrollLeft -= loopPoint;
+      }
+    }, 16);
+
+    return () => {
+      if (testimonialAutoScrollRef.current) {
+        clearInterval(testimonialAutoScrollRef.current);
+        testimonialAutoScrollRef.current = null;
+      }
     };
+  }, [loading]);
 
-    window.addEventListener("scroll", handleScroll);
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+  useEffect(() => {
+  const handleScroll = () => {
+    setShowBackToTop(window.scrollY > 300);
   };
+
+  window.addEventListener("scroll", handleScroll);
+
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+};
+
 
   useEffect(() => {
     // Device-local daily streak using localStorage
@@ -257,41 +300,41 @@ export default function Landing() {
 
           <div className="flex items-center gap-4">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-xl text-slate-300 hover:text-cyan-400"
-                  title="Theme: Dark (Default)"
-                >
-                  <Moon className="h-5 w-5 text-cyan-400" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={8} className="z-[1010] bg-[#0b1329] border-white/10 text-white min-w-[12rem]">
-                <DropdownMenuLabel className="text-gray-400 font-semibold text-xs px-2 py-1">Select Theme</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("default")}>
-                  <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                  <span className="text-cyan-400 font-medium">Default</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("purple")}>
-                  <span className="h-2 w-2 rounded-full bg-purple-500" />
-                  <span className="text-purple-400 font-medium">Purple Galaxy</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("blue")}>
-                  <span className="h-2 w-2 rounded-full bg-blue-500" />
-                  <span className="text-blue-400 font-medium">Ocean Blue</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("green")}>
-                  <span className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-green-400 font-medium">Neon Green</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("orange")}>
-                  <span className="h-2 w-2 rounded-full bg-orange-500" />
-                  <span className="text-orange-400 font-medium">Sunset Orange</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-xl text-slate-300 hover:text-cyan-400"
+                title="Theme: Dark (Default)"
+              >
+                <Moon className="h-5 w-5 text-cyan-400" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8} className="z-[1001] bg-[#0b1329] border-white/10 text-white min-w-[12rem]">
+              <DropdownMenuLabel className="text-gray-400 font-semibold text-xs px-2 py-1">Select Theme</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("default")}>
+                <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                <span className="text-cyan-400 font-medium">Default</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("purple")}>
+                <span className="h-2 w-2 rounded-full bg-purple-500" />
+                <span className="text-purple-400 font-medium">Purple Galaxy</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("blue")}>
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-blue-400 font-medium">Ocean Blue</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("green")}>
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-green-400 font-medium">Neon Green</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer focus:bg-white/10 hover:bg-white/10 focus:text-white px-3 py-2 text-sm rounded-lg" onClick={() => setTheme("orange")}>
+                <span className="h-2 w-2 rounded-full bg-orange-500" />
+                <span className="text-orange-400 font-medium">Sunset Orange</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
             <Link to="/login">
               <Button
@@ -312,7 +355,14 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="container relative grid items-center gap-16 px-6 pb-24 pt-36 lg:grid-cols-2">
+      {/* <section className="container relative grid items-center gap-16 px-6 pb-24 pt-24 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        > */}
+
+      <section className="container relative grid items-center gap-16 px-6 pb-24 pt-24 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -329,7 +379,8 @@ export default function Landing() {
               {" "}
               Seniors
             </span>
-            .<br />
+            .
+            <br />
             Grow With
             <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-sky-500 bg-clip-text text-transparent">
               {" "}
@@ -398,13 +449,13 @@ export default function Landing() {
             transition={{ duration: 4, repeat: Infinity }}
             className="absolute -left-8 top-10 rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur-2xl"
           >
-            <div className="flex items-center gap-3">
-              <Flame className="text-cyan-400" />
-              <div>
-                <p className="text-sm text-slate-300">Your Streak</p>
-                <h4 className="text-xl font-bold">{streak === null ? "—" : `${streak} Days 🔥`}</h4>
+              <div className="flex items-center gap-3">
+                <Flame className="text-cyan-400" />
+                <div>
+                  <p className="text-sm text-slate-300">Your Streak</p>
+                  <h4 className="text-xl font-bold">{streak === null ? "—" : `${streak} Days 🔥`}</h4>
+                </div>
               </div>
-            </div>
           </motion.div>
 
           <motion.div
@@ -448,7 +499,7 @@ export default function Landing() {
       </section>
 
       {/* How it Works */}
-      <section className="container px-6 py-24">
+      <section className="container px-6 py-24 relative">
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -610,43 +661,154 @@ export default function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section className="container px-6 py-24">
-        <h2 className="mb-16 text-center text-5xl font-black">
-          Loved by Students
+      <section className="container relative px-6 py-24">
+        <h2 className="mb-16 flex flex-wrap items-center justify-center gap-3 text-center text-5xl font-black leading-none sm:text-6xl">
+          <span className="text-slate-700">Learners</span>
+          <span role="img" aria-label="heart" className="text-5xl sm:text-6xl">
+            ❤️
+          </span>
+          <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">
+            Peer Learning
+          </span>
         </h2>
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <button
+          aria-label="Scroll testimonials left"
+          onClick={() => {
+            const el = scrollRef.current;
+            if (el) el.scrollBy({ left: -el.clientWidth * 0.7, behavior: "smooth" });
+          }}
+          className="absolute left-2 top-[60%] z-20 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 p-2 text-slate-100 shadow-lg backdrop-blur hover:bg-black/60"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+
+        <button
+          aria-label="Scroll testimonials right"
+          onClick={() => {
+            const el = scrollRef.current;
+            if (el) el.scrollBy({ left: el.clientWidth * 0.7, behavior: "smooth" });
+          }}
+          className="absolute right-2 top-[60%] z-20 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 p-2 text-slate-100 shadow-lg backdrop-blur hover:bg-black/60"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+
+        <div
+          ref={scrollRef}
+          onMouseEnter={() => {
+            testimonialPausedRef.current = true;
+          }}
+          onMouseLeave={() => {
+            testimonialPausedRef.current = false;
+          }}
+          className="no-scrollbar flex gap-8 overflow-x-auto py-2 md:py-0"
+          style={{ scrollBehavior: "smooth" }}
+        >
           {[
             {
               text: "PeerLearn helped me crack my first internship interview.",
               name: "Aisha",
               role: "AIML Student",
+              rating: 5,
             },
             {
               text: "I started mentoring juniors and improved my communication skills.",
               name: "Rahul",
               role: "Senior Mentor",
+              rating: 5,
             },
             {
               text: "Found amazing teammates for hackathons and projects.",
               name: "John",
               role: "Web Developer",
+              rating: 4,
+            },
+            {
+              text: "Built a polished project portfolio with mentor guidance.",
+              name: "Maya",
+              role: "Frontend Developer",
+              rating: 5,
+            },
+            {
+              text: "Mentors gave real-world advice that helped my internship prep.",
+              name: "Priya",
+              role: "ML Intern",
+              rating: 5,
+            },
+            {
+              text: "Great community for interview practice and study groups.",
+              name: "Gautam",
+              role: "DSA Enthusiast",
+              rating: 4,
+            },
+            // duplicate for seamless looping
+            {
+              text: "PeerLearn helped me crack my first internship interview.",
+              name: "Aisha",
+              role: "AIML Student",
+              rating: 5,
+            },
+            {
+              text: "I started mentoring juniors and improved my communication skills.",
+              name: "Rahul",
+              role: "Senior Mentor",
+              rating: 5,
+            },
+            {
+              text: "Found amazing teammates for hackathons and projects.",
+              name: "John",
+              role: "Web Developer",
+              rating: 4,
+            },
+            {
+              text: "Built a polished project portfolio with mentor guidance.",
+              name: "Maya",
+              role: "Frontend Developer",
+              rating: 5,
+            },
+            {
+              text: "Mentors gave real-world advice that helped my internship prep.",
+              name: "Priya",
+              role: "ML Intern",
+              rating: 5,
+            },
+            {
+              text: "Great community for interview practice and study groups.",
+              name: "Gautam",
+              role: "DSA Enthusiast",
+              rating: 4,
             },
           ].map((t, i) => (
             <motion.div
-              key={i}
+              key={`${t.name}-${i}`}
               whileHover={{ y: -10 }}
-              className="rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 p-8 backdrop-blur-xl"
+              className="min-w-[20rem] md:min-w-[24rem] flex-shrink-0"
             >
-              <p className="leading-8 text-slate-300/80">“{t.text}”</p>
+              <div className="rounded-3xl p-[1px] bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-indigo-500/12">
+                <motion.div
+                  className="rounded-3xl border border-white/12 bg-[#061224]/70 p-8 backdrop-blur-xl shadow-[0_12px_40px_rgba(34,211,238,0.06)]"
+                  whileHover={{ y: -6 }}
+                >
+                  <div className="mb-4 flex items-center gap-2">
+                    <span aria-hidden className="text-base tracking-wide text-yellow-400">{"★".repeat(t.rating)}{"☆".repeat(5 - t.rating)}</span>
+                    <span className="text-sm text-slate-300">{t.rating}/5</span>
+                  </div>
+                  <p className="flex items-start gap-3 leading-9 text-slate-100/95 text-lg">
+                    <span className="text-3xl text-cyan-400/90 leading-none">“</span>
+                    <span className="text-slate-100/95">{t.text}</span>
+                  </p>
 
-              <div className="mt-8">
-                <h4 className="font-bold text-cyan-400">{t.name}</h4>
-                <p className="text-sm text-slate-400">{t.role}</p>
+                  <div className="mt-6">
+                    <h4 className="font-bold text-slate-100">{t.name}</h4>
+                    <p className="text-sm text-slate-300">{t.role}</p>
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           ))}
         </div>
+        <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
       </section>
 
       {/* CTA */}
@@ -746,7 +908,7 @@ export default function Landing() {
           className="fixed bottom-6 right-24 z-50 rounded-full bg-cyan-500 px-4 py-3 text-black shadow-lg transition hover:bg-cyan-400"
           aria-label="Back to top"
         >
-          ↑
+        ↑
         </button>
       )}
     </motion.div>

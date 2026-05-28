@@ -96,7 +96,9 @@ A modern peer-to-peer learning platform where students can connect, collaborate,
 <img width="100%" alt="AI Assistant" src="./src/screenshots/ai-chat.png">
 
 ---
-
+## Demo Video
+ [Watch Demo ](
+ https://github.com/user-attachments/assets/6af694a1-e98d-4d31-b99f-eeacddab3ebc)
 
 # 🧠 Problem Statement
 
@@ -250,18 +252,6 @@ git push origin feature-name
 ```
 
 6. Open a Pull Request 🎉
-
----
-
-# 💖 Contributors
-
-Thanks to all the amazing contributors who helped improve this project ❤️
-
-<p align="center">
-  <a href="https://github.com/durdana3105/peer-learning/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=durdana3105/peer-learning" />
-  </a>
-</p>
 
 ---
 

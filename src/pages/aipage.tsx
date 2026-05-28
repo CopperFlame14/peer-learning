@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Bot, Send, User } from "lucide-react";
+<<<<<<< HEAD
 // Imported your mock profile data structures directly into the engine
 import { currentUser, peers } from "../data/mockData";
+=======
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 5da66c6bf301b7e68fd17add37fb48636449739c
 
 const AIPage = () => {
   const [messages, setMessages] = useState<any[]>([
@@ -35,6 +39,7 @@ const AIPage = () => {
     setLoading(true);
 
     try {
+<<<<<<< HEAD
       // Prompt engineering representing our scoring calculation rules
       const systemContext = `
         You are an advanced AI Mentor Recommendation Engine integrated into a Peer Learning platform.
@@ -92,6 +97,13 @@ const AIPage = () => {
 
       const data = await response.json();
       console.log("AI SYSTEM MATCH ENGINE RESPONSE:", data);
+=======
+      const { data, error } = await supabase.functions.invoke("ai-chat", {
+        body: { prompt }
+      });
+
+      if (error) throw error;
+>>>>>>> 5da66c6bf301b7e68fd17add37fb48636449739c
 
       const aiReply = data?.choices?.[0]?.message?.content;
 

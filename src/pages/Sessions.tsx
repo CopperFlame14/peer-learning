@@ -9,10 +9,16 @@ import {
   Send,
   Search,
   Sparkles,
+  Video,
+  Plus,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/useAuth";
+import VideoRoom from "@/components/VideoRoom";
+import { useAwardXP } from "@/hooks/useAwardXP";
+import { CreateSessionDialog } from "@/components/CreateSessionDialog";
+import { generateICS } from "@/utils/calendar";
 
 const tabs = [
   "Upcoming",
@@ -22,6 +28,7 @@ const tabs = [
 
 const Sessions = () => {
   const { user } = useAuth();
+  const { mutate: awardXP } = useAwardXP();
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [filteredSessions, setFilteredSessions] =
@@ -38,6 +45,8 @@ const Sessions = () => {
   const [message, setMessage] = useState("");
 
   const [search, setSearch] = useState("");
+
+  const [isVideoActive, setIsVideoActive] = useState(false);
 
   const messagesEndRef = useRef<any>(null);
 
@@ -203,23 +212,36 @@ const Sessions = () => {
           />
         </div>
 
-        {/* TABS */}
-        <div className="flex gap-4 mb-10 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() =>
-                setSelectedTab(tab)
-              }
-              className={`px-6 py-3 rounded-2xl transition-all whitespace-nowrap ${
-                selectedTab === tab
-                  ? "bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold shadow-lg shadow-cyan-500/20"
-                  : "bg-white/5 border border-white/10 hover:bg-white/10"
-              }`}
-            >
-              {tab}
+        {/* TABS & CREATE SESSION */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
+          <div className="flex gap-4 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() =>
+                  setSelectedTab(tab)
+                }
+                className={`px-6 py-3 rounded-2xl transition-all whitespace-nowrap ${
+                  selectedTab === tab
+                    ? "bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold shadow-lg shadow-cyan-500/20"
+                    : "bg-white/5 border border-white/10 hover:bg-white/10"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <CreateSessionDialog
+            onSessionCreated={() => {
+              window.location.reload();
+            }}
+          >
+            <button className="flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black px-6 py-3 rounded-2xl font-bold hover:opacity-90 transition">
+              <Plus size={20} />
+              Create Session
             </button>
-          ))}
+          </CreateSessionDialog>
         </div>
 
         {/* CONTENT */}
@@ -238,6 +260,13 @@ const Sessions = () => {
             </div>
 
             {/* SESSIONS */}
+            {isVideoActive && selectedSession ? (
+              <VideoRoom 
+                roomName={selectedSession.id} 
+                userName={user?.user_metadata?.full_name || "Anonymous Learner"} 
+                onLeave={() => setIsVideoActive(false)} 
+              />
+            ) : (
             <div className="grid gap-5">
               {filteredSessions.length > 0 ? (
                 filteredSessions.map((s) => (
@@ -319,10 +348,28 @@ const Sessions = () => {
                       )}
                     </div>
 
-                    {/* BUTTON */}
-                    <button className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black py-3 rounded-2xl font-bold hover:opacity-90 transition">
-                      Join Session
-                    </button>
+                    {/* BUTTONS */}
+                    <div className="flex gap-3">
+                      <button className="flex-1 bg-gradient-to-r from-cyan-400 to-purple-500 text-black py-3 rounded-2xl font-bold hover:opacity-90 transition">
+                        Join Session
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateICS(
+                            s.title || "Peer Learning Session",
+                            s.description || "Join us for a collaborative learning session.",
+                            s.scheduled_at ? new Date(s.scheduled_at) : new Date(),
+                            1
+                          );
+                        }}
+                        className="bg-white/10 border border-white/10 hover:bg-white/20 p-3 rounded-2xl transition text-white"
+                        title="Add to Calendar"
+                      >
+                        <Calendar size={24} />
+                      </button>
+                    </div>
                   </motion.div>
                 ))
               ) : (
@@ -342,24 +389,47 @@ const Sessions = () => {
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* RIGHT SIDE CHAT */}
           <div className="bg-white/5 border border-white/10 backdrop-blur-2xl rounded-3xl p-5 flex flex-col h-[750px]">
 
             {/* CHAT HEADER */}
-            <div className="pb-5 border-b border-white/10">
-              <h2 className="text-2xl font-bold mb-2">
-                Session Chat 💬
-              </h2>
+            <div className="pb-5 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">
+                  Session Chat 💬
+                </h2>
 
-              <p className="text-gray-400 text-sm">
-                {selectedSession?.title}
-              </p>
+                <p className="text-gray-400 text-sm">
+                  {selectedSession?.title}
+                </p>
 
-              <div className="mt-3 inline-flex items-center gap-2 bg-green-500/10 border border-green-400/20 text-green-300 px-3 py-1 rounded-full text-sm">
-                🟢 42 learners online
+                <div className="mt-3 inline-flex items-center gap-2 bg-green-500/10 border border-green-400/20 text-green-300 px-3 py-1 rounded-full text-sm">
+                  🟢 42 learners online
+                </div>
               </div>
+              
+              {selectedSession && !isVideoActive && (
+                <button 
+                  onClick={() => {
+                    setIsVideoActive(true);
+                    awardXP({ activity: 'session_join' });
+                  }}
+                  className="flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black px-4 py-2 rounded-2xl font-bold hover:opacity-90 transition"
+                >
+                  <Video size={18} /> Join Video
+                </button>
+              )}
+              {selectedSession && isVideoActive && (
+                <button 
+                  onClick={() => setIsVideoActive(false)}
+                  className="flex items-center gap-2 bg-white/10 border border-white/10 text-white px-4 py-2 rounded-2xl font-bold hover:bg-white/20 transition"
+                >
+                  Leave Video
+                </button>
+              )}
             </div>
 
             {/* MESSAGES */}
